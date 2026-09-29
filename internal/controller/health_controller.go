@@ -1,0 +1,22 @@
+package controller
+
+import (
+	"net/http"
+)
+
+type HealthController struct{}
+
+func NewHealthController() *HealthController {
+	return &HealthController{}
+}
+
+func (c *HealthController) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /healthz", c.Health)
+}
+
+func (c *HealthController) Health(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
