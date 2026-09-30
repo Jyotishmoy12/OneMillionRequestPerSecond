@@ -1,0 +1,10 @@
+# Go build/test cache if a local cache is used.
+.gocache/
+
+# Local build outputs.
+bin/
+tmp/
+coverage.out
+
+# Environment files.
+.env

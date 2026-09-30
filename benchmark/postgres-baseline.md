@@ -28,6 +28,30 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8080/healthz
 Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
 ```
 
+## How To Read These Numbers
+
+`Avg req/sec` means average requests per second. If a 30-second test shows `10,675.79 req/sec`, the API sustained about 10.6k requests every second during that run.
+
+`Duration` is set to `30s` to measure sustained capacity, not only a one-second burst. A `1s` test can be noisy because connection setup, Docker networking, CPU scheduling, and short spikes can distort the result.
+
+`p50`, `p95`, and `p99` are latency percentiles:
+
+- `p50`: 50% of requests completed within this time.
+- `p95`: 95% of requests completed within this time.
+- `p99`: 99% of requests completed within this time.
+
+For example, `p99 latency: 60.81ms` means 99 out of 100 requests finished in 60.81ms or less. The remaining 1% were slower.
+
+`Errors` or `Error count` means requests that failed from the benchmark client's point of view. In these tests, `connection refused` means the local Docker/API networking stack stopped accepting some new TCP connections under pressure.
+
+For capacity claims, use all three together:
+
+```text
+Requests/sec = how much traffic it handled
+p99 latency = how slow the slowest normal requests were
+Errors = whether the result was stable
+```
+
 ## Commands
 
 Health endpoint:

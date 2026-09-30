@@ -8,6 +8,7 @@ import (
 type Config struct {
 	HTTPAddr    string
 	DatabaseURL string
+	RedisAddr   string
 }
 
 func Load() Config {
@@ -21,8 +22,15 @@ func Load() Config {
 		databaseURL = "postgres://postgres:postgres@localhost:5432/onemillionrps?sslmode=disable"
 	}
 
+	redisAddr := strings.TrimSpace(os.Getenv("REDIS_ADDR"))
+
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
 	return Config{
 		HTTPAddr:    ":" + port,
 		DatabaseURL: databaseURL,
+		RedisAddr:   redisAddr,
 	}
 }

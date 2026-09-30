@@ -31,7 +31,7 @@ func TestItemControllerReturnsItem(t *testing.T) {
 
 	itemService := service.NewItemService(fakeControllerItemRepository{
 		item: item,
-	})
+	}, nil)
 	controller := NewItemController(itemService)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/items/1", nil)
@@ -52,7 +52,7 @@ func TestItemControllerReturnsItem(t *testing.T) {
 }
 
 func TestItemControllerRejectsInvalidID(t *testing.T) {
-	itemService := service.NewItemService(fakeControllerItemRepository{})
+	itemService := service.NewItemService(fakeControllerItemRepository{}, nil)
 	controller := NewItemController(itemService)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/items/abc", nil)

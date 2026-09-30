@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
+	"onemillionrps/internal/cache"
 	"onemillionrps/internal/config"
 	"onemillionrps/internal/controller"
 	"onemillionrps/internal/database"
@@ -25,6 +28,11 @@ func main() {
 	}
 	defer db.Close()
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
+	defer redisClient.Close()
+
 	mux := http.NewServeMux()
 
 	healthController := controller.NewHealthController()
@@ -34,7 +42,8 @@ func main() {
 	readinessController.RegisterRoutes(mux)
 
 	itemRepository := repository.NewPostgresItemRepository(db)
-	itemService := service.NewItemService(itemRepository)
+	itemCache := cache.NewRedisItemCache(redisClient)
+	itemService := service.NewItemService(itemRepository, itemCache)
 	itemController := controller.NewItemController(itemService)
 
 	itemController.RegisterRoutes(mux)

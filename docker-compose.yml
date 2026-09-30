@@ -17,6 +17,18 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: valkey/valkey:8-alpine
+    container_name: one-million-rps-redis
+    ports:
+      - "6379:6379"
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: .
@@ -25,10 +37,13 @@ services:
     environment:
       PORT: "8080"
       DATABASE_URL: "postgres://postgres:postgres@postgres:5432/onemillionrps?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
