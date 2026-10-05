@@ -15,6 +15,12 @@ type ItemService struct {
 	cache      cache.ItemCache
 }
 
+type UpdateItemInput struct {
+	Name        string
+	Description string
+	PriceCents  int
+}
+
 func NewItemService(repository repository.ItemRepository, itemCache cache.ItemCache) *ItemService {
 	return &ItemService{
 		repository: repository,
@@ -44,6 +50,25 @@ func (s *ItemService) GetByID(ctx context.Context, id int64) (model.Item, error)
 	if s.cache != nil {
 		if err := s.cache.Set(ctx, item); err != nil {
 			log.Printf("item cache set failed: %v", err)
+		}
+	}
+
+	return item, nil
+}
+
+func (s *ItemService) Update(ctx context.Context, id int64, input UpdateItemInput) (model.Item, error) {
+	item, err := s.repository.Update(ctx, id, repository.UpdateItemInput{
+		Name:        input.Name,
+		Description: input.Description,
+		PriceCents:  input.PriceCents,
+	})
+	if err != nil {
+		return model.Item{}, err
+	}
+
+	if s.cache != nil {
+		if err := s.cache.Delete(ctx, id); err != nil {
+			log.Printf("item cache delete failed: %v", err)
 		}
 	}
 

@@ -53,3 +53,7 @@ func (c *RedisItemCache) Set(ctx context.Context, item model.Item) error {
 func itemCacheKey(id int64) string {
 	return fmt.Sprintf("items:%d", id)
 }
+
+func (c *RedisItemCache) Delete(ctx context.Context, id int64) error {
+	return c.client.Del(ctx, itemCacheKey(id)).Err()
+}
