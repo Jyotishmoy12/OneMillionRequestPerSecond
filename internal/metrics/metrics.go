@@ -19,7 +19,16 @@ var HTTPRequestDurationSeconds = prometheus.NewHistogramVec(
 	[]string{"method", "path", "status"},
 )
 
+var ItemCacheRequestsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "item_cache_requests_total",
+		Help: "Total number of item cache lookups by result.",
+	},
+	[]string{"result"},
+)
+
 func Register() {
 	prometheus.MustRegister(HTTPRequestsTotal)
 	prometheus.MustRegister(HTTPRequestDurationSeconds)
+	prometheus.MustRegister(ItemCacheRequestsTotal)
 }

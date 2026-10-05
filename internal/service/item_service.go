@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"onemillionrps/internal/cache"
+	"onemillionrps/internal/metrics"
 	"onemillionrps/internal/model"
 	"onemillionrps/internal/repository"
 )
@@ -24,12 +25,14 @@ func NewItemService(repository repository.ItemRepository, itemCache cache.ItemCa
 func (s *ItemService) GetByID(ctx context.Context, id int64) (model.Item, error) {
 	if s.cache != nil {
 		item, found, err := s.cache.Get(ctx, id)
-		if err == nil && found {
-			return item, nil
-		}
-
 		if err != nil {
+			metrics.ItemCacheRequestsTotal.WithLabelValues("error").Inc()
 			log.Printf("item cache get failed: %v", err)
+		} else if found {
+			metrics.ItemCacheRequestsTotal.WithLabelValues("hit").Inc()
+			return item, nil
+		} else {
+			metrics.ItemCacheRequestsTotal.WithLabelValues("miss").Inc()
 		}
 	}
 
