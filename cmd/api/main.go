@@ -6,18 +6,23 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 
 	"onemillionrps/internal/cache"
 	"onemillionrps/internal/config"
 	"onemillionrps/internal/controller"
 	"onemillionrps/internal/database"
+	"onemillionrps/internal/metrics"
+	"onemillionrps/internal/middleware"
 	"onemillionrps/internal/repository"
 	"onemillionrps/internal/service"
 )
 
 func main() {
 	cfg := config.Load()
+
+	metrics.Register()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -48,9 +53,11 @@ func main() {
 
 	itemController.RegisterRoutes(mux)
 
+	mux.Handle("GET /metrics", promhttp.Handler())
+
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           mux,
+		Handler:           middleware.Metrics(mux),
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
