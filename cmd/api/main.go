@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -67,9 +70,33 @@ func main() {
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
-	log.Printf("api server listening on %s", cfg.HTTPAddr)
+	serverErrors := make(chan error, 1)
 
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(err)
+	go func() {
+		logger.Info("api server listening", "addr", cfg.HTTPAddr)
+
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrors <- err
+		}
+	}()
+
+	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	defer stop()
+
+	select {
+	case err := <-serverErrors:
+		logger.Error("api server error", "error", err)
+	case <-shutdownCtx.Done():
+		logger.Info("shutdown signal received")
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(timeoutCtx); err != nil {
+		logger.Error("api server shutdown error", "error", err)
+	} else {
+		logger.Info("api server shutdown gracefully")
 	}
 }
