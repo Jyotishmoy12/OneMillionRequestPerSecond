@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -20,6 +22,10 @@ import (
 )
 
 func main() {
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	slog.SetDefault(logger)
 	cfg := config.Load()
 
 	metrics.Register()
@@ -57,7 +63,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           middleware.Metrics(mux),
+		Handler:           middleware.RequestLogger(logger, middleware.Metrics(mux)),
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
