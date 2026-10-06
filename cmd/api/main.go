@@ -42,6 +42,11 @@ func main() {
 	}
 	defer db.Close()
 
+	metricsCtx, cancelMetrics := context.WithCancel(context.Background())
+	defer cancelMetrics()
+
+	go metrics.ObserveDatabasePool(metricsCtx, db, 10*time.Second)
+
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisAddr,
 	})

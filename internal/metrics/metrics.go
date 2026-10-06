@@ -31,4 +31,5 @@ func Register() {
 	prometheus.MustRegister(HTTPRequestsTotal)
 	prometheus.MustRegister(HTTPRequestDurationSeconds)
 	prometheus.MustRegister(ItemCacheRequestsTotal)
+	RegisterDatabasePoolMetrics()
 }
