@@ -44,7 +44,12 @@ func (c *ItemController) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item, err := c.service.GetByID(r.Context(), id)
+	var item any
+	if r.URL.Query().Get("cache") == "false" {
+		item, err = c.service.GetByIDWithoutCache(r.Context(), id)
+	} else {
+		item, err = c.service.GetByID(r.Context(), id)
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeJSON(w, http.StatusNotFound, map[string]string{
 			"error": "item not found",

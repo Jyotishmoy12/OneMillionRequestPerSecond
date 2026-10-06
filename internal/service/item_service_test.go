@@ -116,6 +116,39 @@ func TestItemServiceGetByIDReadsRepositoryOnCacheMiss(t *testing.T) {
 	}
 }
 
+func TestItemServiceGetByIDWithoutCacheBypassesCache(t *testing.T) {
+	expected := model.Item{
+		ID:          1,
+		Name:        "Mechanical Keyboard",
+		Description: "Low-latency keyboard for serious typing and gaming.",
+		PriceCents:  8999,
+		CreatedAt:   time.Now(),
+	}
+
+	repository := &fakeItemRepository{
+		item: expected,
+	}
+	itemCache := &fakeItemCache{
+		item:  expected,
+		found: true,
+	}
+
+	service := NewItemService(repository, itemCache)
+
+	actual, err := service.GetByIDWithoutCache(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if actual.ID != expected.ID {
+		t.Fatalf("expected id %d, got %d", expected.ID, actual.ID)
+	}
+
+	if repository.calls != 1 {
+		t.Fatalf("expected repository to be called once, got %d", repository.calls)
+	}
+}
+
 func TestItemServiceUpdateInvalidatesCache(t *testing.T) {
 	expected := model.Item{
 		ID:          1,

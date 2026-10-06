@@ -56,6 +56,10 @@ func (s *ItemService) GetByID(ctx context.Context, id int64) (model.Item, error)
 	return item, nil
 }
 
+func (s *ItemService) GetByIDWithoutCache(ctx context.Context, id int64) (model.Item, error) {
+	return s.repository.FindByID(ctx, id)
+}
+
 func (s *ItemService) Update(ctx context.Context, id int64, input UpdateItemInput) (model.Item, error) {
 	item, err := s.repository.Update(ctx, id, repository.UpdateItemInput{
 		Name:        input.Name,

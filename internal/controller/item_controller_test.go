@@ -57,6 +57,32 @@ func TestItemControllerReturnsItem(t *testing.T) {
 	}
 }
 
+func TestItemControllerCanBypassCache(t *testing.T) {
+	item := model.Item{
+		ID:          1,
+		Name:        "Mechanical Keyboard",
+		Description: "Low-latency keyboard for serious typing and gaming.",
+		PriceCents:  8999,
+		CreatedAt:   time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC),
+	}
+
+	itemService := service.NewItemService(fakeControllerItemRepository{
+		item: item,
+	}, nil)
+	controller := NewItemController(itemService)
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/items/1?cache=false", nil)
+	req.SetPathValue("id", "1")
+
+	rec := httptest.NewRecorder()
+
+	controller.GetByID(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+}
+
 func TestItemControllerRejectsInvalidID(t *testing.T) {
 	itemService := service.NewItemService(fakeControllerItemRepository{}, nil)
 	controller := NewItemController(itemService)
