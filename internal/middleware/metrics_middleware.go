@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"onemillionrps/internal/metrics"
@@ -34,13 +33,8 @@ func Metrics(next http.Handler) http.Handler {
 		next.ServeHTTP(recorder, r)
 
 		status := strconv.Itoa(recorder.statusCode)
-		path := r.Pattern // Use the registered pattern as the path label
-
-		if path == "" {
-			path = r.URL.Path // Fallback to the actual URL path if no pattern is registered
-		} else if _, routePath, found := strings.Cut(path, " "); found {
-			path = routePath
-		}
+        
+		path := routePattern(r)
 
 		metrics.HTTPRequestsTotal.WithLabelValues(r.Method, path, status).Inc()
 		metrics.HTTPRequestDurationSeconds.WithLabelValues(r.Method, path, status).Observe(time.Since(startedAt).Seconds())
