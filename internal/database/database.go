@@ -7,15 +7,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+func Connect(ctx context.Context, databaseURL string, maxConns int32, minConns int32) (*pgxpool.Pool, error) {
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 
 	if err != nil {
 		return nil, err
 	}
 
-	poolConfig.MaxConns = 10
-	poolConfig.MinConns = 2
+	poolConfig.MaxConns = maxConns
+	poolConfig.MinConns = minConns
 	poolConfig.MaxConnLifetime = 30 * time.Minute
 	poolConfig.MaxConnIdleTime = 5 * time.Minute
 

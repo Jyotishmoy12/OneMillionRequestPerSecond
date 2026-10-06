@@ -36,11 +36,16 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	db, err := database.Connect(ctx, cfg.DatabaseURL)
+	db, err := database.Connect(ctx, cfg.DatabaseURL, cfg.DBMaxConns, cfg.DBMinConns)
 	if err != nil {
 		log.Fatalf("database connection failed: %v", err)
 	}
 	defer db.Close()
+	logger.Info(
+		"database pool configured",
+		"max_conns", cfg.DBMaxConns,
+		"min_conns", cfg.DBMinConns,
+	)
 
 	metricsCtx, cancelMetrics := context.WithCancel(context.Background())
 	defer cancelMetrics()
