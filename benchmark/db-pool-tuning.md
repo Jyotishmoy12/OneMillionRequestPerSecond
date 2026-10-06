@@ -22,7 +22,7 @@ That makes the API bypass Valkey and hit Postgres directly, so the DB pool metri
 - Benchmark tool: `alpine/bombardier`
 - Duration: `30s`
 - Concurrency levels: `100`, `250`, `500`
-- Target URL: `http://host.docker.internal:8080/v1/items/1?cache=false`
+- Target URL: `<DOCKER_HOST_API_URL>/v1/items/1?cache=false`
 
 ## Commands
 
@@ -30,8 +30,8 @@ For each DB pool setting, `docker-compose.yml` was updated, the API was recreate
 
 ```powershell
 docker compose up --build -d
-.\benchmark\run-local.ps1 -Url "http://host.docker.internal:8080/v1/items/1?cache=false" -ConcurrencyLevels 100,250,500
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/metrics | Select-String "database_pool"
+.\benchmark\run-local.ps1 -Url "<DOCKER_HOST_API_URL>/v1/items/1?cache=false" -ConcurrencyLevels 100,250,500
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/metrics | Select-String "database_pool"
 ```
 
 ## Benchmark Results

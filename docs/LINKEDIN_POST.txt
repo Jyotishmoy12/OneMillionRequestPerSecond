@@ -1,0 +1,186 @@
+I have been building a high-throughput Go API project step by step, with the goal of learning what it really takes to move toward very high request-per-second systems.
+
+The project is not just a simple API benchmark. I built it in stages so each bottleneck could be measured, understood, and improved.
+
+Step 1: Go API foundation
+
+- Built a Go HTTP API with proper internal packages.
+- Added health and readiness endpoints.
+- Added structured request handling.
+- Added tests for config, controllers, middleware, and services.
+- Used Docker so the API can run consistently across local and cloud environments.
+
+Step 2: Postgres integration
+
+- Added Postgres as the main database.
+- Used Docker Compose for local database setup.
+- Added an items endpoint backed by Postgres.
+- Added database readiness checks.
+- Added database connection pool configuration.
+- Benchmarked the database-backed path separately using `cache=false`.
+
+Step 3: Valkey/Redis caching
+
+- Added Valkey as the cache layer.
+- Implemented cache hit and cache miss flow.
+- Added cache invalidation on item update.
+- Compared Postgres-only performance with hot-cache performance.
+- Confirmed that caching improved the stable read path significantly.
+
+Step 4: Metrics and observability
+
+- Added Prometheus metrics.
+- Added Grafana dashboards.
+- Tracked:
+  - requests per second
+  - latency
+  - status codes
+  - server errors
+  - cache hits and misses
+  - Go memory
+  - goroutines
+  - Postgres pool usage
+  - Postgres wait count and wait duration
+
+Step 5: Local benchmarks
+
+- Used Bombardier for load testing.
+- Recorded benchmark results under a dedicated `benchmark` folder.
+- Compared:
+  - Postgres baseline
+  - Valkey cache baseline
+  - DB pool tuning
+
+Best local result:
+
+- About 12.7k requests/sec
+- 250 concurrency
+- 0 errors
+- p99 latency around 56ms
+
+Step 6: AWS infrastructure with Terraform
+
+- Added Terraform infrastructure.
+- Created remote state using S3 and DynamoDB locking.
+- Built a VPC with public subnets.
+- Added security groups.
+- Added ECR for the API image.
+- Built and pushed the Docker image to ECR.
+- Created an ECS cluster on EC2 capacity.
+- Added ECS task definitions and services.
+
+Step 7: First AWS deployment
+
+- Deployed the API to ECS on EC2.
+- Started with a single EC2-backed ECS task.
+- Used sidecar Postgres and sidecar Valkey for learning and cost control.
+- Added app-side database migration and seed logic.
+- Verified:
+  - `/healthz`
+  - `/readyz`
+  - `/v1/items/1`
+
+Step 8: AWS benchmark, single EC2
+
+First AWS test used my laptop as the load generator.
+
+Single EC2 direct endpoint result:
+
+- About 1.6k requests/sec
+- 500 concurrency
+- 0 errors
+- p99 latency around 471ms
+
+This was much lower than local because the benchmark traffic had to travel from my laptop to AWS over the public internet.
+
+Step 9: Horizontal scaling with ALB
+
+- Added an Application Load Balancer.
+- Scaled from 1 ECS task to 2 ECS tasks.
+- Scaled from 1 EC2 instance to 2 EC2 instances.
+- Registered both API targets behind the ALB.
+- Confirmed both targets were healthy.
+
+Two EC2 + ALB result from laptop:
+
+- About 2.8k requests/sec
+- 500 concurrency
+- 0 errors
+- p99 latency around 344ms
+
+This confirmed that horizontal scaling worked.
+
+Step 10: AWS-side load generation
+
+To remove my laptop and internet path from the benchmark, I added a separate EC2 load generator.
+
+- Created a load generator EC2 instance.
+- Used AWS Systems Manager instead of SSH.
+- Installed Docker.
+- Ran Bombardier from inside AWS.
+
+AWS-side load generator result:
+
+- About 3.0k requests/sec
+- 500 concurrency
+- 0 errors
+- p99 latency around 370ms
+
+Best balanced AWS result:
+
+- About 2.89k requests/sec
+- 100 concurrency
+- 0 errors
+- p99 latency around 97ms
+
+Local vs AWS comparison
+
+Local Docker benchmark:
+
+- About 12.7k requests/sec
+- 250 concurrency
+- p99 around 56ms
+- 0 errors
+
+AWS, single EC2 direct endpoint:
+
+- About 1.6k requests/sec
+- 500 concurrency
+- p99 around 471ms
+- 0 errors
+
+AWS, 2 EC2 tasks behind ALB from laptop:
+
+- About 2.8k requests/sec
+- 500 concurrency
+- p99 around 344ms
+- 0 errors
+
+AWS, 2 EC2 tasks behind ALB from AWS load generator:
+
+- About 3.0k requests/sec
+- 500 concurrency
+- p99 around 370ms
+- 0 errors
+
+Main learning
+
+The biggest lesson was that request-per-second numbers are not universal. They depend heavily on where the load generator runs, network distance, instance size, database/cache placement, connection handling, and latency goals.
+
+Locally, the API could reach much higher RPS because everything ran close together. On AWS, the first results were lower because of network distance and small infrastructure. After adding an ALB, multiple ECS tasks, and an AWS-side load generator, the benchmark became more realistic and the results improved.
+
+Current proven AWS capacity:
+
+- Architecture: 2 ECS EC2 API tasks behind an ALB
+- Benchmark source: EC2 load generator in the same AWS region
+- Stable throughput: about 3k requests/sec
+- Errors: 0
+
+Next step:
+
+- Scale carefully to 4 API tasks / 4 EC2 instances
+- Run AWS-internal benchmarks again
+- Record cost and performance
+- Continue toward higher RPS with short, controlled test windows
+
+This project helped me understand that building toward 1M RPS is not one magic optimization. It is a chain of measurement, bottleneck discovery, caching, observability, infrastructure scaling, and cost-aware testing.

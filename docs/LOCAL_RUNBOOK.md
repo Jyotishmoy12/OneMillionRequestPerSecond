@@ -38,9 +38,9 @@ api server listening
 ## Test API
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/healthz
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/readyz
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/healthz
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/readyz
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
 ```
 
 Expected:
@@ -60,19 +60,19 @@ docker exec -it one-million-rps-redis valkey-cli FLUSHALL
 First request should miss cache and refill from Postgres:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
 ```
 
 Second request should hit cache:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
 ```
 
 Check cache metrics:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/metrics | Select-String "item_cache_requests_total"
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/metrics | Select-String "item_cache_requests_total"
 ```
 
 Check raw cache value:
@@ -86,7 +86,7 @@ docker exec -it one-million-rps-redis valkey-cli GET items:1
 Use this only for DB tuning and benchmarking:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing "http://localhost:8080/v1/items/1?cache=false"
+Invoke-WebRequest -UseBasicParsing "<LOCAL_API_URL>/v1/items/1?cache=false"
 ```
 
 This bypasses Valkey for that request only.
@@ -96,7 +96,7 @@ This bypasses Valkey for that request only.
 Warm cache:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
 docker exec -it one-million-rps-redis valkey-cli GET items:1
 ```
 
@@ -106,7 +106,7 @@ Update item:
 Invoke-WebRequest `
   -UseBasicParsing `
   -Method PUT `
-  -Uri http://localhost:8080/v1/items/1 `
+  -Uri <LOCAL_API_URL>/v1/items/1 `
   -ContentType "application/json" `
   -Body '{"name":"Mechanical Keyboard Pro","description":"Updated low-latency keyboard.","price_cents":9999}'
 ```
@@ -128,13 +128,13 @@ Expected:
 Prometheus targets:
 
 ```text
-http://localhost:9090/targets
+<LOCAL_PROMETHEUS_URL>/targets
 ```
 
 Grafana dashboard:
 
 ```text
-http://localhost:3000/d/one-million-rps-api/one-million-rps-api
+<LOCAL_GRAFANA_URL>/d/one-million-rps-api/one-million-rps-api
 ```
 
 Grafana login:
@@ -160,13 +160,13 @@ Important panels:
 Normal cache path:
 
 ```powershell
-.\benchmark\run-local.ps1 -Url "http://host.docker.internal:8080/v1/items/1" -ConcurrencyLevels 100,250,500
+.\benchmark\run-local.ps1 -Url "<DOCKER_HOST_API_URL>/v1/items/1" -ConcurrencyLevels 100,250,500
 ```
 
 Postgres no-cache path:
 
 ```powershell
-.\benchmark\run-local.ps1 -Url "http://host.docker.internal:8080/v1/items/1?cache=false" -ConcurrencyLevels 100,250,500
+.\benchmark\run-local.ps1 -Url "<DOCKER_HOST_API_URL>/v1/items/1?cache=false" -ConcurrencyLevels 100,250,500
 ```
 
 Short burst test:

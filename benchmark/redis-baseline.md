@@ -26,8 +26,8 @@ On a cache miss, the fallback path is:
 Cache warm-up before benchmark:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
-Invoke-WebRequest -UseBasicParsing http://localhost:8080/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
+Invoke-WebRequest -UseBasicParsing <LOCAL_API_URL>/v1/items/1
 ```
 
 ## How To Read These Numbers
@@ -57,10 +57,10 @@ Errors = whether the result was stable
 ## Commands
 
 ```powershell
-docker run --rm alpine/bombardier -c 100 -d 30s -l http://host.docker.internal:8080/v1/items/1
-docker run --rm alpine/bombardier -c 250 -d 30s -l http://host.docker.internal:8080/v1/items/1
-docker run --rm alpine/bombardier -c 500 -d 30s -l http://host.docker.internal:8080/v1/items/1
-docker run --rm alpine/bombardier -c 750 -d 30s -l http://host.docker.internal:8080/v1/items/1
+docker run --rm alpine/bombardier -c 100 -d 30s -l <DOCKER_HOST_API_URL>/v1/items/1
+docker run --rm alpine/bombardier -c 250 -d 30s -l <DOCKER_HOST_API_URL>/v1/items/1
+docker run --rm alpine/bombardier -c 500 -d 30s -l <DOCKER_HOST_API_URL>/v1/items/1
+docker run --rm alpine/bombardier -c 750 -d 30s -l <DOCKER_HOST_API_URL>/v1/items/1
 ```
 
 ## Results

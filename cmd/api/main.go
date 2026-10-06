@@ -33,14 +33,19 @@ func main() {
 
 	metrics.Register()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	db, err := database.Connect(ctx, cfg.DatabaseURL, cfg.DBMaxConns, cfg.DBMinConns)
+	db, err := database.ConnectWithRetry(ctx, cfg.DatabaseURL, cfg.DBMaxConns, cfg.DBMinConns, 2*time.Second)
 	if err != nil {
 		log.Fatalf("database connection failed: %v", err)
 	}
 	defer db.Close()
+
+	if err := database.RunMigrations(ctx, db); err != nil {
+		log.Fatalf("database migration failed: %v", err)
+	}
+
 	logger.Info(
 		"database pool configured",
 		"max_conns", cfg.DBMaxConns,
