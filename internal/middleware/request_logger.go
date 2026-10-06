@@ -27,6 +27,7 @@ func RequestLogger(logger *slog.Logger, next http.Handler) http.Handler {
 			"request_id", requestID,
 			"method", r.Method,
 			"path", r.URL.Path,
+			"route", r.Pattern,
 			"status", recorder.statusCode,
 			"duration_ms", time.Since(startedAt).Milliseconds(),
 		)
